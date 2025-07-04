@@ -1,13 +1,10 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import (
     TemplateView, ListView, DetailView, 
-    CreateView, UpdateView, DeleteView, FormView
+    CreateView, UpdateView
 )
-from django.contrib.auth.models import User
-from django.contrib.auth import login, authenticate, logout
-from django.db.models import Q
 from django.contrib import messages
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -19,11 +16,12 @@ from django.utils.html import strip_tags
 import logging
 import json
 
-from .models import Doctor, Patient, Appointment, Specialty, MedicalRecord
-from .forms import (
-    UserRegisterForm, PatientProfileForm, AppointmentForm, 
-    AppointmentUpdateForm, MedicalRecordForm, LoginForm
-)
+from .models import Appointment
+from patients.models import Patient
+from doctors.models import Doctor, Specialty
+from records.models import MedicalRecord
+from records.forms import MedicalRecordForm
+from .forms import AppointmentForm, AppointmentUpdateForm
 from .utils.payment import (
     create_payment_order, verify_payment_signature, 
     create_razorpay_client, send_payment_confirmation_email
@@ -37,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 # Home and Authentication Views
 class HomeView(TemplateView):
-    template_name = 'appointments/home.html'
+    template_name = 'dashboard/home.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -46,82 +44,8 @@ class HomeView(TemplateView):
         return context
 
 
-class RegisterView(TemplateView):
-    template_name = 'appointments/register.html'
-    
-
-class LoginView(FormView):
-  form_class = LoginForm
-  template_name = 'registration/login.html'
-  success_url = reverse_lazy('dashboard')
-
-  def form_valid(self, form):
-    user = authenticate(
-      username=form.cleaned_data['username'],
-      password=form.cleaned_data['password']
-    )
-    if user is not None:
-      login(self.request, user)
-      return super().form_valid(form)
-    else:
-      return self.form_invalid(form)
-    
-
-def logout_view(request):
-  logout(request)
-  return redirect('home')
-
-
-
-# Patient Views
-class PatientRegistrationView(CreateView):
-    template_name = 'appointments/register_patient.html'
-    form_class = UserRegisterForm
-    success_url = reverse_lazy('dashboard')
-    
-    def form_valid(self, form):
-        user = form.save()
-        patient = Patient.objects.create(user=user)
-        send_mail(
-            subject='Welcome to Our Healthcare Portal',
-            message=f'Hello {user.get_full_name() or user.username},\n\nThank you for registering with us!',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-        login(self.request, user)
-        return redirect('edit_profile')
-    
-    
-class PatientProfileView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
-    model = Patient
-    template_name = 'appointments/patient_profile.html'
-    context_object_name = 'patient'
-    
-    def test_func(self):
-        # Ensure only the patient can view their own profile
-        return self.request.user == self.get_object().user
-    
-    def get_object(self):
-        return get_object_or_404(Patient, user=self.request.user)
-
-
-class PatientProfileUpdateView(LoginRequiredMixin, UpdateView):
-    model = Patient
-    form_class = PatientProfileForm
-    template_name = 'appointments/edit_profile.html'
-    success_url = reverse_lazy('patient_profile')
-    
-    def get_object(self):
-        return get_object_or_404(Patient, user=self.request.user)
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Your profile has been updated successfully!')
-        return super().form_valid(form)
-
-
 class DashboardView(LoginRequiredMixin, TemplateView):
-    template_name = 'appointments/dashboard.html'
+    template_name = 'dashboard/dashboard.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -161,78 +85,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 pass
         
         return context
-
-
-# Doctor Views
-class DoctorListView(ListView):
-    model = Doctor
-    template_name = 'appointments/doctor_list.html'
-    context_object_name = 'doctors'
-    
-    def get_queryset(self):
-        queryset = Doctor.objects.all()
-        specialty = self.request.GET.get('specialty')
-        search = self.request.GET.get('search')
-        
-        if specialty:
-            queryset = queryset.filter(specialty__name=specialty)
-        if search:
-            queryset = queryset.filter(
-                Q(user__first_name__icontains=search) | 
-                Q(user__last_name__icontains=search) |
-                Q(specialty__name__icontains=search)
-            )
-        
-        return queryset
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['specialties'] = Specialty.objects.all()
-        return context
-
-
-class DoctorDetailView(DetailView):
-    model = Doctor
-    template_name = 'appointments/doctor_detail.html'
-    context_object_name = 'doctor'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Only show available appointment slots if user is logged in
-        if self.request.user.is_authenticated:
-            try:
-                patient = Patient.objects.get(user=self.request.user)
-                context['is_patient'] = True
-                context['appointment_form'] = AppointmentForm(initial={'doctor': self.object})
-            except Patient.DoesNotExist:
-                context['is_patient'] = False
-        return context
-    
-    
-class DoctorProfileView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
-    model = Doctor
-    template_name = 'appointments/doctor_profile.html'
-    context_object_name = 'doctor'
-    def test_func(self):
-        # Ensure only the doctor can view their own profile
-        return self.request.user == self.get_object().user
-    def get_object(self):
-        return get_object_or_404(Doctor, user=self.request.user)
-  
-    
-class DoctorProfileUpdateView(LoginRequiredMixin, UpdateView):
-    model = Doctor
-    form_class = PatientProfileForm
-    template_name = 'appointments/edit_profile.html'
-    success_url = reverse_lazy('dashboard')
-    
-    def get_object(self):
-        return get_object_or_404(Doctor, user=self.request.user)
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'Your profile has been updated successfully!')
-        return super().form_valid(form)
-
 
 
 # Appointment Views
@@ -425,7 +277,7 @@ class EnhancedAppointmentCancelView(LoginRequiredMixin, UserPassesTestMixin, Upd
 
 # payment views
 class PaymentView(LoginRequiredMixin, TemplateView):
-    template_name = 'appointments/payment.html'
+    template_name = 'payments/payment.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -459,7 +311,7 @@ class PaymentView(LoginRequiredMixin, TemplateView):
 
 
 class PaymentFailedView(LoginRequiredMixin, TemplateView):
-    template_name = 'appointments/payment_failed.html'
+    template_name = 'payments/payment_failed.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -626,79 +478,3 @@ def process_refund(appointment, reason="Appointment cancelled"):
     except Exception as e:
         logger.error(f"Refund error: {e}")
         return False, f"Refund error: {str(e)}"
-
-
-# Medical Record Views
-class MedicalRecordListView(LoginRequiredMixin, ListView):
-    model = MedicalRecord
-    template_name = 'appointments/medical_record_list.html'
-    context_object_name = 'records'
-    
-    def get_queryset(self):
-        user = self.request.user
-        
-        try:
-            patient = Patient.objects.get(user=user)
-            return MedicalRecord.objects.filter(patient=patient).order_by('-date')
-        except Patient.DoesNotExist:
-            try:
-                doctor = Doctor.objects.get(user=user)
-                return MedicalRecord.objects.filter(doctor=doctor).order_by('-date')
-            except Doctor.DoesNotExist:
-                if user.is_staff:
-                    return MedicalRecord.objects.all().order_by('-date')
-                return MedicalRecord.objects.none()
-            
-
-class MedicalRecordDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
-    model = MedicalRecord
-    template_name = 'appointments/medical_record_detail.html'
-    context_object_name = 'record'
-    
-    def test_func(self):
-        record = self.get_object()
-        user = self.request.user
-        # Check if user is the patient or the doctor for this record
-        return (
-            hasattr(user, 'patient') and user.patient == record.patient or
-            hasattr(user, 'doctor') and user.doctor == record.doctor or
-            user.is_staff
-        )
-        
-
-class MedicalRecordCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
-    model = MedicalRecord
-    form_class = MedicalRecordForm
-    template_name = 'appointments/add_medical_record.html'
-    
-    def test_func(self):
-        appointment_id = self.kwargs.get('appointment_id')
-        appointment = get_object_or_404(Appointment, id=appointment_id)
-        user = self.request.user
-        # Only the doctor of the appointment can create a medical record
-        return hasattr(user, 'doctor') and user.doctor == appointment.doctor
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        appointment_id = self.kwargs.get('appointment_id')
-        context['appointment'] = get_object_or_404(Appointment, id=appointment_id)
-        return context
-    
-    def form_valid(self, form):
-        appointment_id = self.kwargs.get('appointment_id')
-        appointment = get_object_or_404(Appointment, id=appointment_id)
-        
-        form.instance.patient = appointment.patient
-        form.instance.doctor = appointment.doctor
-        form.instance.appointment = appointment
-        
-        # Update appointment status to completed if not already
-        if appointment.status != 'completed':
-            appointment.status = 'completed'
-            appointment.save()
-        
-        messages.success(self.request, 'Medical record created successfully!')
-        return super().form_valid(form)
-    
-    def get_success_url(self):
-        return reverse('medical_record_detail', kwargs={'pk': self.object.pk})

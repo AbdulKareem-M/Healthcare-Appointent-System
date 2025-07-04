@@ -1,46 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.urls import reverse
-
-class Specialty(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    
-    def __str__(self):
-        return self.name
-    
-    class Meta:
-        verbose_name_plural = "Specialties"
-
-class Doctor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    specialty = models.ForeignKey(Specialty, on_delete=models.SET_NULL, null=True)
-    license_number = models.CharField(max_length=50)
-    phone = models.CharField(max_length=20)
-    bio = models.TextField(blank=True)
-    profile_picture = models.ImageField(upload_to='doctor_profiles/', blank=True, null=True)
-    
-    def __str__(self):
-        return f"{self.user.get_full_name()} - {self.specialty}"
-    
-    def get_absolute_url(self):
-        return reverse('doctor_detail', args=[str(self.id)])
-
-class Patient(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    date_of_birth = models.DateField(null=True, blank=True)
-    phone = models.CharField(max_length=20)
-    address = models.TextField(blank=True)
-    emergency_contact = models.CharField(max_length=100, blank=True)
-    medical_history = models.TextField(blank=True)
-    profile_picture = models.ImageField(upload_to='patient_profiles/', blank=True, null=True)
-    
-    def __str__(self):
-        return self.user.get_full_name()
-    
-    def get_absolute_url(self):
-        return reverse('patient_detail', args=[str(self.id)])
-
+from doctors.models import Doctor
+from patients.models import Patient
 class Appointment(models.Model):
     STATUS_CHOICES = [
         ('scheduled', 'Scheduled'),
@@ -86,23 +47,3 @@ class Appointment(models.Model):
     class Meta:
         ordering = ['date', 'time']
 
-class MedicalRecord(models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
-    appointment = models.OneToOneField(Appointment, on_delete=models.SET_NULL, null=True, blank=True)
-    date = models.DateField(auto_now_add=True)
-    diagnosis = models.TextField()
-    treatment = models.TextField()
-    prescription = models.TextField(blank=True)
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        return f"Medical Record for {self.patient} on {self.date}"
-    
-    def get_absolute_url(self):
-        return reverse('medical_record_detail', args=[str(self.id)])
-    
-    class Meta:
-        ordering = ['-date']

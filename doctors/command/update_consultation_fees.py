@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from appointments.models import Doctor
+from doctors.models import Doctor
 
 class Command(BaseCommand):
     help = 'Update consultation fees for doctors'
