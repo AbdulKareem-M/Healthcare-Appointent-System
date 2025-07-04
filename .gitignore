@@ -8,6 +8,8 @@ env/
 venv/
 .venv/
 
+.env
+
 # Django
 *.pyc
 *.pot
@@ -24,3 +26,4 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+
