@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}HealthCare - Your Health, Our Priority{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Your Health, Our Priority</h1>
+                <p class="lead mb-4">Schedule appointments with top healthcare professionals with just a few clicks. Fast, secure, and convenient.</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'new_appointment' %}" class="btn btn-light btn-lg me-3">Book Appointment</a>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-lg">My Dashboard</a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-light btn-lg me-3">Register Now</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">Login</a>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="static\images\hospital.jpg" alt="Healthcare professionals" class="img-fluid rounded shadow">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Why Choose Our Healthcare System</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <i class="fas fa-user-md specialty-icon"></i>
+                        <h3 class="card-title h4">Expert Doctors</h3>
+                        <p class="card-text">Access to a network of qualified and experienced healthcare professionals across various specialties.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check specialty-icon"></i>
+                        <h3 class="card-title h4">Easy Scheduling</h3>
+                        <p class="card-text">Book, reschedule, or cancel appointments online anytime, anywhere with our user-friendly system.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="card-body">
+                        <i class="fas fa-file-medical-alt specialty-icon"></i>
+                        <h3 class="card-title h4">Digital Records</h3>
+                        <p class="card-text">Secure access to your medical history, prescriptions, and appointment records all in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Specialties Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Medical Specialties</h2>
+        <div class="row g-4">
+            {% for specialty in specialties %}
+                <div class="col-md-4 col-lg-2">
+                    <div class="card h-100 text-center p-3">
+                        <div class="card-body">
+                            <i class="fas fa-stethoscope specialty-icon"></i>
+                            <h3 class="card-title h5">{{ specialty.name }}</h3>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <a href="{% url 'doctor_list' %}?specialty={{ specialty.name }}" class="btn btn-sm btn-outline-primary">Find Doctors</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center">
+                    <p>No specialties available at the moment.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Doctors -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Featured Doctors</h2>
+            <a href="{% url 'doctor_list' %}" class="btn btn-outline-primary">View All Doctors</a>
+        </div>
+        <div class="row g-4">
+            {% for doctor in doctors %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="card doctor-card h-100">
+                        {% if doctor.profile_picture %}
+                            <img src="{{ doctor.profile_picture.url }}" class="card-img-top" alt="{{ doctor }}">
+                        {% else %}
+                            <img src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg" class="card-img-top" alt="{{ doctor }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ doctor }}</h5>
+                            <p class="card-text text-muted">{{ doctor.specialty.name }}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <a href="{% url 'doctor_detail' doctor.id %}" class="btn btn-sm btn-primary">View Profile</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center">
+                    <p>No doctors available at the moment.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">What Our Patients Say</h2>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <div class="card border-0 shadow p-4">
+                                <div class="card-body text-center">
+                                    <p class="lead mb-4">"The appointment system is so easy to use! I was able to find a specialist and book an appointment within minutes."</p>
+                                    <div class="d-flex justify-content-center">
+                                        <div>
+                                            <h5 class="mb-0">Sarah Johnson</h5>
+                                            <p class="text-muted">Patient</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="card border-0 shadow p-4">
+                                <div class="card-body text-center">
+                                    <p class="lead mb-4">"I love having all my medical records in one place. It makes follow-up appointments so much more efficient."</p>
+                                    <div class="d-flex justify-content-center">
+                                        <div>
+                                            <h5 class="mb-0">Michael Brown</h5>
+                                            <p class="text-muted">Patient</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="card border-0 shadow p-4">
+                                <div class="card-body text-center">
+                                    <p class="lead mb-4">"As someone with a busy schedule, being able to book appointments online has been a game-changer for managing my healthcare."</p>
+                                    <div class="d-flex justify-content-center">
+                                        <div>
+                                            <h5 class="mb-0">Emily Davis</h5>
+                                            <p class="text-muted">Patient</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow">
+                    <div class="card-body p-5">
+                        <div class="row align-items-center">
+                            <div class="col-lg-8">
+                                <h3>Ready to take control of your healthcare?</h3>
+                                <p class="lead mb-0">Join thousands of patients who have simplified their healthcare journey with our appointment system.</p>
+                            </div>
+                            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                                {% if user.is_authenticated %}
+                                    <a href="{% url 'new_appointment' %}" class="btn btn-primary btn-lg">Book Now</a>
+                                {% else %}
+                                    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">Get Started</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Profile</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 0; }
+        .profile-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 32px;
+        }
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 24px;
+            border: 2px solid #0077b6;
+        }
+        .profile-info h2 {
+            margin: 0 0 8px 0;
+            color: #0077b6;
+        }
+        .profile-info p {
+            margin: 4px 0;
+            color: #555;
+        }
+        .profile-section {
+            margin-bottom: 20px;
+        }
+        .profile-section h3 {
+            margin-bottom: 8px;
+            color: #023e8a;
+        }
+        .profile-section ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            {% if doctor.photo %}
+                <img src="{{ doctor.photo.url }}" alt="Doctor Photo" class="profile-photo">
+            {% else %}
+                <img src="{% static 'default_doctor.png' %}" alt="Doctor Photo" class="profile-photo">
+            {% endif %}
+            <div class="profile-info">
+                <h2>{{ doctor.user.get_full_name }}</h2>
+                <p>Specialization: {{ doctor.specialization }}</p>
+                <p>Experience: {{ doctor.experience }} years</p>
+                <p>Email: {{ doctor.user.email }}</p>
+                <p>Phone: {{ doctor.phone }}</p>
+            </div>
+        </div>
+        <div class="profile-section">
+            <h3>About</h3>
+            <p>{{ doctor.bio|default:"No bio available." }}</p>
+        </div>
+        <div class="profile-section">
+            <h3>Education</h3>
+            <ul>
+                {% for degree in doctor.education.all %}
+                    <li>{{ degree }}</li>
+                {% empty %}
+                    <li>No education details available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="profile-section">
+            <h3>Clinic Hours</h3>
+            <ul>
+                {% for hour in doctor.clinic_hours.all %}
+                    <li>{{ hour }}</li>
+                {% empty %}
+                    <li>No clinic hours available.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>

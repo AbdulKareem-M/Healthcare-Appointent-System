@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}My Appointments - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Appointments</h1>
+        {% if user.patient %}
+            <a href="{% url 'new_appointment' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>New Appointment
+            </a>
+        {% endif %}
+    </div>
+    
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'upcoming' or not request.GET.status %}active{% endif %}" href="{% url 'appointment_list' %}?status=upcoming">Upcoming</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'past' %}active{% endif %}" href="{% url 'appointment_list' %}?status=past">Past</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'all' %}active{% endif %}" href="{% url 'appointment_list' %}?status=all">All</a>
+        </li>
+    </ul>
+    
+    <!-- Appointments List -->
+    {% if appointments %}
+        <div class="row g-4">
+            {% for appointment in appointments %}
+                <div class="col-md-6">
+                    <div class="card h-100 appointment-status-{{ appointment.status }}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">
+                                    {% if user.patient %}
+                                        Appointment with {{ appointment.doctor }}
+                                    {% else %}
+                                        Appointment with {{ appointment.patient }}
+                                    {% endif %}
+                                </h5>
+                                <span class="badge {% if appointment.status == 'scheduled' %}bg-warning{% elif appointment.status == 'confirmed' %}bg-success{% elif appointment.status == 'completed' %}bg-info{% elif appointment.status == 'cancelled' %}bg-secondary{% else %}bg-danger{% endif %}">
+                                    {{ appointment.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <i class="fas fa-calendar-day me-2 text-primary"></i>
+                                <span>{{ appointment.date }}</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <i class="fas fa-clock me-2 text-primary"></i>
+                                <span>{{ appointment.time }}</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <i class="fas fa-comment-medical me-2 text-primary"></i>
+                                <span>{{ appointment.reason|truncatechars:100 }}</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{% url 'appointment_detail' appointment.id %}" class="btn btn-outline-primary">View Details</a>
+                                
+                                {% if appointment.status == 'scheduled' or appointment.status == 'confirmed' %}
+                                    {% if user.patient and user.patient == appointment.patient %}
+                                        <a href="{% url 'cancel_appointment_with_refund' appointment.id %}" class="btn btn-outline-danger">Cancel</a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                <h3>No appointments found</h3>
+                <p class="text-muted">
+                    {% if request.GET.status == 'upcoming' or not request.GET.status %}
+                        You don't have any upcoming appointments.
+                    {% elif request.GET.status == 'past' %}
+                        You don't have any past appointments.
+                    {% else %}
+                        You don't have any appointments.
+                    {% endif %}
+                </p>
+                
+                {% if user.patient %}
+                    <a href="{% url 'new_appointment' %}" class="btn btn-primary mt-3">Schedule an Appointment</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

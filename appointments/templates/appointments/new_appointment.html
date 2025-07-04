@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h3>Book New Appointment</h3>
+        </div>
+        <div class="card-body">
+          <form method="post" id="appointmentForm">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label for="{{ form.doctor.id_for_label }}" class="form-label"
+                >Select Doctor</label
+              >
+              <select
+                name="{{ form.doctor.name }}"
+                id="{{ form.doctor.id_for_label }}"
+                class="form-select"
+                required
+              >
+                <option value="">Choose a doctor...</option>
+                {% for doctor in doctors %}
+                <option
+                  value="{{ doctor.id }}"
+                  data-fee="{{ doctor.consultation_fee|default:'500' }}"
+                  data-specialty="{{ doctor.specialty.name }}"
+                >
+                  Dr. {{ doctor.user.first_name }} {{ doctor.user.last_name }} -
+                  {{ doctor.specialty.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="{{ form.date.id_for_label }}" class="form-label"
+                    >Appointment Date</label
+                  >
+                  {{ form.date }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="{{ form.time.id_for_label }}" class="form-label"
+                    >Appointment Time</label
+                  >
+                  {{ form.time }}
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.reason.id_for_label }}" class="form-label"
+                >Reason for Visit</label
+              >
+              {{ form.reason }}
+            </div>
+
+            <!-- Consultation Fee Display -->
+            <div class="consultation-fee" id="feeDisplay" style="display: none">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5>Consultation Fee</h5>
+                  <small class="text-muted"
+                    >Payment will be processed securely via Razorpay</small
+                  >
+                </div>
+                <div class="fee-amount" id="feeAmount">₹500</div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+              <button type="submit" class="btn btn-primary btn-lg">
+                Proceed to Payment
+              </button>
+              <a
+                href="{% url 'appointment_list' %}"
+                class="btn btn-outline-secondary"
+                >Cancel</a
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const doctorSelect = document.getElementById(
+      "{{ form.doctor.id_for_label }}"
+    );
+    const feeDisplay = document.getElementById("feeDisplay");
+    const feeAmount = document.getElementById("feeAmount");
+
+    doctorSelect.addEventListener("change", function () {
+      const selectedOption = this.options[this.selectedIndex];
+      if (selectedOption.value) {
+        const fee = selectedOption.getAttribute("data-fee") || "500";
+        feeAmount.textContent = "₹" + fee;
+        feeDisplay.style.display = "block";
+      } else {
+        feeDisplay.style.display = "none";
+      }
+    });
+
+    // Set minimum date to today
+    const dateInput = document.getElementById("{{ form.date.id_for_label }}");
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.setAttribute("min", today);
+  });
+</script>
+{% endblock %}

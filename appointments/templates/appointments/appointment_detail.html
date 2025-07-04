@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Appointment Details - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="h4 mb-0">Appointment Details</h2>
+                        <span class="badge {% if appointment.status == 'scheduled' %}bg-warning{% elif appointment.status == 'confirmed' %}bg-success{% elif appointment.status == 'completed' %}bg-info{% elif appointment.status == 'cancelled' %}bg-secondary{% else %}bg-danger{% endif %} fs-6">
+                            {{ appointment.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Patient Information</h3>
+                            <p><strong>Name:</strong> {{ appointment.patient }}</p>
+                            <p><strong>Email:</strong> {{ appointment.patient.user.email }}</p>
+                            <p><strong>Phone:</strong> {{ appointment.patient.phone }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Doctor Information</h3>
+                            <p><strong>Name:</strong> {{ appointment.doctor }}</p>
+                            <p><strong>Specialty:</strong> {{ appointment.doctor.specialty }}</p>
+                            <p><strong>Phone:</strong> {{ appointment.doctor.phone }}</p>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Appointment Details</h3>
+                            <p><strong>Date:</strong> {{ appointment.date }}</p>
+                            <p><strong>Time:</strong> {{ appointment.time }}</p>
+                            <p><strong>Created:</strong> {{ appointment.created_at }}</p>
+                            <p><strong>Last Updated:</strong> {{ appointment.updated_at }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h5 mb-3">Reason for Visit</h3>
+                            <p>{{ appointment.reason }}</p>
+                            
+                            {% if appointment.notes %}
+                                <h3 class="h5 mb-3 mt-4">Doctor's Notes</h3>
+                                <p>{{ appointment.notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if medical_record %}
+                        <hr class="my-4">
+                        
+                        <div class="alert alert-info">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h3 class="h5 mb-0">Medical Record Available</h3>
+                                <a href="{% url 'medical_record_detail' medical_record.id %}" class="btn btn-sm btn-outline-primary">View Medical Record</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'appointment_list' %}" class="btn btn-outline-secondary">Back to Appointments</a>
+                        
+                        {% if appointment.status == 'scheduled' or appointment.status == 'confirmed' %}
+                            {% if user.patient and user.patient == appointment.patient %}
+                                <a href="{% url 'cancel_appointment_with_refund' appointment.id %}" class="btn btn-outline-danger">Cancel Appointment</a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% if user.doctor and user.doctor == appointment.doctor %}
+                <!-- Doctor's Update Form -->
+                <div class="card shadow mt-4">
+                    <div class="card-header bg-white py-3">
+                        <h3 class="h4 mb-0">Update Appointment</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="post" action="{% url 'edit_appointment' appointment.id %}" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="{{ update_form.status.id_for_label }}" class="form-label">Status</label>
+                                <select name="{{ update_form.status.name }}" id="{{ update_form.status.id_for_label }}" class="form-select">
+                                    {% for value, text in update_form.status.field.choices %}
+                                        <option value="{{ value }}" {% if appointment.status == value %}selected{% endif %}>{{ text }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ update_form.notes.id_for_label }}" class="form-label">Notes</label>
+                                <textarea name="{{ update_form.notes.name }}" id="{{ update_form.notes.id_for_label }}" class="form-control" rows="3">{{ appointment.notes }}</textarea>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <button type="submit" class="btn btn-primary">Update Appointment</button>
+                                
+                                {% if appointment.status == 'completed' and not medical_record %}
+                                    <a href="{% url 'add_medical_record' appointment.id %}" class="btn btn-success">Add Medical Record</a>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                {% if appointment.status == 'completed' and not medical_record and medical_record_form %}
+                    <!-- Add Medical Record Form -->
+                    <div class="card shadow mt-4">
+                        <div class="card-header bg-white py-3">
+                            <h3 class="h4 mb-0">Add Medical Record</h3>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="post" action="{% url 'add_medical_record' appointment.id %}" novalidate>
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ medical_record_form.diagnosis.id_for_label }}" class="form-label">Diagnosis</label>
+                                    <textarea name="{{ medical_record_form.diagnosis.name }}" id="{{ medical_record_form.diagnosis.id_for_label }}" class="form-control" rows="3" required></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ medical_record_form.treatment.id_for_label }}" class="form-label">Treatment</label>
+                                    <textarea name="{{ medical_record_form.treatment.name }}" id="{{ medical_record_form.treatment.id_for_label }}" class="form-control" rows="3" required></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ medical_record_form.prescription.id_for_label }}" class="form-label">Prescription</label>
+                                    <textarea name="{{ medical_record_form.prescription.name }}" id="{{ medical_record_form.prescription.id_for_label }}" class="form-control" rows="3"></textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ medical_record_form.notes.id_for_label }}" class="form-label">Additional Notes</label>
+                                    <textarea name="{{ medical_record_form.notes.name }}" id="{{ medical_record_form.notes.id_for_label }}" class="form-control" rows="3"></textarea>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success">Save Medical Record</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

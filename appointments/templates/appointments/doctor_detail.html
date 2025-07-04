@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ doctor }} - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if doctor.profile_picture %}
+                        <img src="{{ doctor.profile_picture.url }}" alt="{{ doctor }}" class="rounded-circle img-fluid mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg" alt="{{ doctor }}" class="rounded-circle img-fluid mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h3 class="mb-1">{{ doctor }}</h3>
+                    <p class="text-muted mb-3">{{ doctor.specialty.name }}</p>
+                    
+                    <div class="d-flex justify-content-center mb-2">
+                        {% if is_patient %}
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#appointmentModal">
+                                Book Appointment
+                            </button>
+                        {% elif user.is_authenticated %}
+                            <div class="alert alert-info mb-0">
+                                <small>Only patients can book appointments</small>
+                            </div>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary me-2">Login to Book</a>
+                            <a href="{% url 'register' %}" class="btn btn-outline-primary">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Contact Information</h4>
+                    <div class="mb-3">
+                        <i class="fas fa-phone-alt me-2 text-primary"></i>
+                        <span>{{ doctor.phone }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <i class="fas fa-id-card me-2 text-primary"></i>
+                        <span>License: {{ doctor.license_number }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">About {{ doctor }}</h3>
+                    <p>{{ doctor.bio|default:"No biography available." }}</p>
+                    
+                    {% if doctor.specialty %}
+                        <h4 class="mt-4 mb-3">Specialty</h4>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ doctor.specialty.name }}</h5>
+                                <p class="card-text">{{ doctor.specialty.description }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <h4 class="mt-4 mb-3">Services</h4>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Consultations</h5>
+                                    <p class="card-text">General and specialized medical consultations.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Diagnoses</h5>
+                                    <p class="card-text">Comprehensive diagnostic services.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Treatment Plans</h5>
+                                    <p class="card-text">Personalized treatment planning and management.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">Follow-ups</h5>
+                                    <p class="card-text">Regular follow-up appointments to monitor progress.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Modal -->
+{% if is_patient %}
+    <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="appointmentModalLabel">Book an Appointment with {{ doctor }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'new_appointment' %}">
+                        {% csrf_token %}
+                        
+                        <input type="hidden" name="doctor" value="{{ doctor.id }}">
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="id_date" class="form-label">Date</label>
+                                <input type="date" name="date" id="id_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="id_time" class="form-label">Time</label>
+                                <input type="time" name="time" id="id_time" class="form-control" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 mt-3">
+                            <label for="id_reason" class="form-label">Reason for Visit</label>
+                            <textarea name="reason" id="id_reason" class="form-control" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Book Appointment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

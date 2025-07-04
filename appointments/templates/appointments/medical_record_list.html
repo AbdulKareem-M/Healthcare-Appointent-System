@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Medical Records - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Medical Records</h1>
+    
+    {% if records %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Doctor</th>
+                        <th>Diagnosis</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.doctor }}</td>
+                            <td>{{ record.diagnosis|truncatechars:50 }}</td>
+                            <td>
+                                <a href="{% url 'medical_record_detail' record.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-file-medical fa-4x text-muted mb-3"></i>
+                <h3>No medical records found</h3>
+                <p class="text-muted">You don't have any medical records in our system yet.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

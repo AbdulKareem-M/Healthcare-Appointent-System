@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Hospital Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .payment-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .appointment-summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .amount-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .payment-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .payment-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+        .secure-badge {
+            text-align: center;
+            margin-top: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-container">
+            <div class="text-center mb-4">
+                <h2>Complete Your Payment</h2>
+                <p class="text-muted">Secure payment powered by Razorpay</p>
+            </div>
+
+            <div class="appointment-summary">
+                <h4>Appointment Details</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Doctor:</strong> Dr. {{ appointment.doctor.user.first_name }} {{ appointment.doctor.user.last_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Specialty:</strong> {{ appointment.doctor.specialty.name }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Date:</strong> {{ appointment.date|date:"F d, Y" }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Time:</strong> {{ appointment.time|time:"g:i A" }}
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <strong>Reason:</strong> {{ appointment.reason }}
+                </div>
+            </div>
+
+            <div class="amount-display">
+                ₹{{ appointment.consultation_fee }}
+            </div>
+
+            <button id="rzp-button" class="payment-btn">
+                Pay ₹{{ appointment.consultation_fee }} Now
+            </button>
+
+            <div class="secure-badge">
+                <i class="fas fa-lock"></i> Your payment is secured with 256-bit SSL encryption
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'appointment_list' %}" class="btn btn-link">Cancel Payment</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        document.getElementById('rzp-button').onclick = function(e) {
+            var options = {
+                "key": "{{ razorpay_key_id }}",
+                "amount": "{{ amount }}",
+                "currency": "{{ currency }}",
+                "name": "Hospital Management System",
+                "description": "Consultation Fee Payment",
+                "image": "/static/img/logo.png", // Optional: Add your logo
+                "order_id": "{{ order_id }}",
+                "handler": function (response) {
+                    // Create a form and submit payment details
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{% url "payment_callback" %}';
+                    
+                    // Add CSRF token
+                    var csrfToken = document.createElement('input');
+                    csrfToken.type = 'hidden';
+                    csrfToken.name = 'csrfmiddlewaretoken';
+                    csrfToken.value = '{{ csrf_token }}';
+                    form.appendChild(csrfToken);
+                    
+                    // Add payment response data
+                    var orderIdInput = document.createElement('input');
+                    orderIdInput.type = 'hidden';
+                    orderIdInput.name = 'razorpay_order_id';
+                    orderIdInput.value = response.razorpay_order_id;
+                    form.appendChild(orderIdInput);
+                    
+                    var paymentIdInput = document.createElement('input');
+                    paymentIdInput.type = 'hidden';
+                    paymentIdInput.name = 'razorpay_payment_id';
+                    paymentIdInput.value = response.razorpay_payment_id;
+                    form.appendChild(paymentIdInput);
+                    
+                    var signatureInput = document.createElement('input');
+                    signatureInput.type = 'hidden';
+                    signatureInput.name = 'razorpay_signature';
+                    signatureInput.value = response.razorpay_signature;
+                    form.appendChild(signatureInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                },
+                "prefill": {
+                    "name": "{{ user_name }}",
+                    "email": "{{ user_email }}",
+                    "contact": "{{ user_phone }}"
+                },
+                "theme": {
+                    "color": "#007bff"
+                },
+                "modal": {
+                    "ondismiss": function() {
+                        console.log('Payment modal closed');
+                    }
+                }
+            };
+            
+            var rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response) {
+                alert('Payment failed: ' + response.error.description);
+                window.location.href = '{% url "payment_failed" appointment.id %}';
+            });
+            
+            rzp.open();
+            e.preventDefault();
+        }
+    </script>
+</body>
+</html>

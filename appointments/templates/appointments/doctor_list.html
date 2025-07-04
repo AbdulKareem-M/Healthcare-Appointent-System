@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Find a Doctor - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Find a Doctor</h1>
+    
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Search by name or specialty" value="{{ request.GET.search|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="specialty" class="form-label">Specialty</label>
+                    <select class="form-select" id="specialty" name="specialty">
+                        <option value="">All Specialties</option>
+                        {% for specialty in specialties %}
+                            <option value="{{ specialty.name }}" {% if request.GET.specialty == specialty.name %}selected{% endif %}>{{ specialty.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Doctors List -->
+    <div class="row g-4">
+        {% for doctor in doctors %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card doctor-card h-100">
+                    {% if doctor.profile_picture %}
+                        <img src="{{ doctor.profile_picture.url }}" class="card-img-top" alt="{{ doctor }}">
+                    {% else %}
+                        <img src="https://images.pexels.com/photos/5452201/pexels-photo-5452201.jpeg" class="card-img-top" alt="{{ doctor }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ doctor }}</h5>
+                        <p class="card-text text-muted">{{ doctor.specialty.name }}</p>
+                        <p class="card-text">{{ doctor.bio|truncatechars:100 }}</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 pb-3">
+                        <a href="{% url 'doctor_detail' doctor.id %}" class="btn btn-primary w-100">View Profile</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <p>No doctors found matching your criteria.</p>
+                    <a href="{% url 'doctor_list' %}" class="btn btn-outline-primary mt-2">Clear Filters</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

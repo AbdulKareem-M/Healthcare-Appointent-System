@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Welcome, {{ user.get_full_name|default:user.username }}</h1>
+    
+    {% if patient %}
+        <!-- Patient Dashboard -->
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">Upcoming Appointments</h3>
+                        <p class="display-4">{{ upcoming_appointments.count }}</p>
+                        <a href="{% url 'appointment_list' %}?status=upcoming" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-medical-alt fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">Medical Records</h3>
+                        <p class="display-4">{{ medical_records.count }}</p>
+                        <a href="{% url 'medical_record_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">Find Doctors</h3>
+                        <p class="lead">Browse specialists</p>
+                        <a href="{% url 'doctor_list' %}" class="btn btn-sm btn-outline-primary">Search Doctors</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">New Appointment</h3>
+                        <p class="lead">Schedule a visit</p>
+                        <a href="{% url 'new_appointment' %}" class="btn btn-sm btn-primary">Book Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upcoming Appointments -->
+        <div class="card mt-5">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="h4 mb-0">Upcoming Appointments</h2>
+                    <a href="{% url 'appointment_list' %}?status=upcoming" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if upcoming_appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Doctor</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in upcoming_appointments %}
+                                    <tr>
+                                        <td>{{ appointment.doctor }}</td>
+                                        <td>{{ appointment.date }}</td>
+                                        <td>{{ appointment.time }}</td>
+                                        <td>
+                                            <span class="badge {% if appointment.status == 'scheduled' %}bg-warning{% elif appointment.status == 'confirmed' %}bg-success{% else %}bg-info{% endif %}">
+                                                {{ appointment.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'appointment_detail' appointment.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>You don't have any upcoming appointments.</p>
+                        <a href="{% url 'new_appointment' %}" class="btn btn-primary">Schedule an Appointment</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Recent Medical Records -->
+        <div class="card mt-4">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="h4 mb-0">Recent Medical Records</h2>
+                    <a href="{% url 'medical_record_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if medical_records %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Doctor</th>
+                                    <th>Diagnosis</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in medical_records %}
+                                    <tr>
+                                        <td>{{ record.date }}</td>
+                                        <td>{{ record.doctor }}</td>
+                                        <td>{{ record.diagnosis|truncatechars:50 }}</td>
+                                        <td>
+                                            <a href="{% url 'medical_record_detail' record.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>No medical records available.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% elif doctor %}
+        <!-- Doctor Dashboard -->
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-day fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">Today's Appointments</h3>
+                        <p class="display-4">{{ today_appointments.count }}</p>
+                        <a href="{% url 'appointment_list' %}" class="btn btn-sm btn-outline-primary">View Schedule</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">Upcoming Appointments</h3>
+                        <p class="display-4">{{ upcoming_appointments.count }}</p>
+                        <a href="{% url 'appointment_list' %}?status=upcoming" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-edit fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">Profile</h3>
+                        <p class="lead">Update your info</p>
+                        <a href="{% url 'edit_doctor_profile' doctor.id %}" class="btn btn-sm btn-outline-primary">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-medical fa-3x text-primary mb-3"></i>
+                        <h3 class="h5">Medical Records</h3>
+                        <p class="lead">Patient history</p>
+                        <a href="{% url 'medical_record_list' %}" class="btn btn-sm btn-outline-primary">View Records</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Today's Appointments -->
+        <div class="card mt-5">
+            <div class="card-header bg-white">
+                <h2 class="h4 mb-0">Today's Appointments</h2>
+            </div>
+            <div class="card-body">
+                {% if today_appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in today_appointments %}
+                                    <tr>
+                                        <td>{{ appointment.time }}</td>
+                                        <td>{{ appointment.patient }}</td>
+                                        <td>{{ appointment.reason|truncatechars:30 }}</td>
+                                        <td>
+                                            <span class="badge {% if appointment.status == 'scheduled' %}bg-warning{% elif appointment.status == 'confirmed' %}bg-success{% else %}bg-info{% endif %}">
+                                                {{ appointment.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'appointment_detail' appointment.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>You don't have any appointments scheduled for today.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Upcoming Appointments -->
+        <div class="card mt-4">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="h4 mb-0">Upcoming Appointments</h2>
+                    <a href="{% url 'appointment_list' %}?status=upcoming" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if upcoming_appointments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in upcoming_appointments %}
+                                    <tr>
+                                        <td>{{ appointment.date }}</td>
+                                        <td>{{ appointment.time }}</td>
+                                        <td>{{ appointment.patient }}</td>
+                                        <td>{{ appointment.reason|truncatechars:30 }}</td>
+                                        <td>
+                                            <span class="badge {% if appointment.status == 'scheduled' %}bg-warning{% elif appointment.status == 'confirmed' %}bg-success{% else %}bg-info{% endif %}">
+                                                {{ appointment.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'appointment_detail' appointment.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>You don't have any upcoming appointments.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <!-- Admin Dashboard -->
+        <div class="alert alert-info">
+            <p>Welcome to the admin dashboard. Please use the Django admin interface for full administrative capabilities.</p>
+            <a href="{% url 'admin:index' %}" class="btn btn-primary mt-2">Go to Admin Interface</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

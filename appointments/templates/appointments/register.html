@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - HealthCare{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Join Our Healthcare System</h2>
+                    <p class="text-center mb-4">Create an account to book appointments, access medical records, and more.</p>
+                    
+                    <div class="row g-4 mt-3">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center p-4">
+                                    <i class="fas fa-user-injured fa-3x text-primary mb-3"></i>
+                                    <h3 class="card-title h4">I am a Patient</h3>
+                                    <p class="card-text">Register as a patient to book appointments with doctors and manage your healthcare.</p>
+                                    <a href="{% url 'register_patient' %}" class="btn btn-primary mt-3">Register as Patient</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center p-4">
+                                    <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                                    <h3 class="card-title h4">I am a Doctor</h3>
+                                    <p class="card-text">Doctor registration is managed by our administrators to ensure credentials verification.</p>
+                                    <a href="#" class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#doctorInfoModal">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Doctor Info Modal -->
+<div class="modal fade" id="doctorInfoModal" tabindex="-1" aria-labelledby="doctorInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="doctorInfoModalLabel">Doctor Registration Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>To maintain the quality and credibility of our healthcare system, doctor registrations are handled through a verification process.</p>
+                <p>If you are a healthcare professional interested in joining our platform, please contact our administration with the following information:</p>
+                <ul>
+                    <li>Full name and credentials</li>
+                    <li>Specialty and license number</li>
+                    <li>Contact information</li>
+                    <li>Professional experience</li>
+                </ul>
+                <p>You can reach our administration team at:</p>
+                <p><i class="fas fa-envelope me-2"></i> doctors@healthcare.com</p>
+                <p><i class="fas fa-phone me-2"></i> (123) 456-7890</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
